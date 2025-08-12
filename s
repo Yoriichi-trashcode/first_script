@@ -886,4 +886,131 @@ speedFill.Size = UDim2.new(math.clamp(defaultWalkSpeed/100, 0, 1), 0, 1, 0)
 flySpeedBox.Text = tostring(flySpeed)
 flySpeedLabel.Text = "Fly Speed: " .. tostring(flySpeed)
 
+-- ESP Button (add to movementTab in your existing code)
+local espButton = Instance.new("TextButton")
+espButton.Name = "ESPButton"
+espButton.Size = UDim2.new(1, -20, 0, 30)
+espButton.Position = UDim2.new(0, 10, 0, 280) -- Position below noclip button
+espButton.BackgroundColor3 = Color3.fromRGB(150, 60, 60)
+espButton.AutoButtonColor = false
+espButton.Text = "ESP"
+espButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+espButton.Font = Enum.Font.GothamBold
+espButton.TextSize = 14
+espButton.Parent = movementTab
 
+local espCorner = Instance.new("UICorner")
+espCorner.CornerRadius = UDim.new(0, 6)
+espCorner.Parent = espButton
+
+-- Button hover effect
+setupButtonHover(espButton, Color3.fromRGB(150, 60, 60), Color3.fromRGB(170, 80, 80))
+
+-- ESP functionality
+local espEnabled = false
+local espObjects = {}
+local espColor = Color3.fromRGB(255, 50, 50)
+
+local function createEsp(player)
+    if espObjects[player] or player == game:GetService("Players").LocalPlayer then return end
+    
+    local character = player.Character
+    if not character then
+        player.CharacterAdded:Wait()
+        character = player.Character
+    end
+    
+    local highlight = Instance.new("Highlight")
+    highlight.Name = player.Name .. "_ESP"
+    highlight.FillColor = espColor
+    highlight.OutlineColor = espColor
+    highlight.FillTransparency = 0.5
+    highlight.OutlineTransparency = 0
+    highlight.Parent = character
+    espObjects[player] = highlight
+    
+    -- Handle character changes
+    player.CharacterAdded:Connect(function(newChar)
+        if espObjects[player] then
+            espObjects[player].Parent = nil
+            task.wait() -- Small delay to ensure character is loaded
+            highlight.Parent = newChar
+        end
+    end)
+end
+
+local function removeEsp(player)
+    if espObjects[player] then
+        espObjects[player]:Destroy()
+        espObjects[player] = nil
+    end
+end
+
+local function toggleEsp()
+    espEnabled = not espEnabled
+    
+    if espEnabled then
+        espButton.Text = "ESP (ON)"
+        game:GetService("TweenService"):Create(
+            espButton,
+            TweenInfo.new(0.2),
+            {BackgroundColor3 = Color3.fromRGB(60, 150, 60)}
+        ):Play()
+        
+        for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+            createEsp(player)
+        end
+        
+        -- Connect to new players
+        game:GetService("Players").PlayerAdded:Connect(function(player)
+            if espEnabled then
+                createEsp(player)
+            end
+        end)
+    else
+        espButton.Text = "ESP"
+        game:GetService("TweenService"):Create(
+            espButton,
+            TweenInfo.new(0.2),
+            {BackgroundColor3 = Color3.fromRGB(150, 60, 60)}
+        ):Play()
+        
+        for player, _ in pairs(espObjects) do
+            removeEsp(player)
+        end
+    end
+    
+    -- Animate button click
+    game:GetService("TweenService"):Create(
+        espButton,
+        TweenInfo.new(0.1),
+        {Size = UDim2.new(1, -25, 0, 28)}
+    ):Play()
+    game:GetService("TweenService"):Create(
+        espButton,
+        TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, false, 0.1),
+        {Size = UDim2.new(1, -20, 0, 30)}
+    ):Play()
+end
+
+espButton.MouseButton1Click:Connect(toggleEsp)
+
+-- Clean up ESP when GUI is closed
+gui.Destroying:Connect(function()
+    for player, _ in pairs(espObjects) do
+        removeEsp(player)
+    end
+end)
+
+-- Initialize ESP for existing players if needed
+game:GetService("Players").PlayerAdded:Connect(function(player)
+    if espEnabled then
+        createEsp(player)
+    end
+end)
+
+for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+    if espEnabled and player ~= game:GetService("Players").LocalPlayer then
+        createEsp(player)
+    end
+end
