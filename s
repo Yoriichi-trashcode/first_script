@@ -2,6 +2,38 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+-- At the top, inside your required services definitions:
+local Lighting = game:GetService("Lighting")
+
+-- Function to toggle fullbright:
+local fullbrightEnabled = false
+local originalLightingProps = {}
+
+local function toggleFullbright()
+    if not fullbrightEnabled then
+        -- Save the original lighting settings
+        originalLightingProps = {
+            Brightness = Lighting.Brightness,
+            Ambient = Lighting.Ambient,
+            OutdoorAmbient = Lighting.OutdoorAmbient,
+            ClockTime = Lighting.ClockTime,
+        }
+        -- Apply fullbright settings
+        Lighting.Brightness = 2      -- Max brightness
+        Lighting.Ambient = Color3.new(1, 1, 1)         -- Pure white ambient
+        Lighting.OutdoorAmbient = Color3.new(1, 1, 1)  -- Pure white outdoor ambient
+        Lighting.ClockTime = 12      -- Optimal daylight
+        fullbrightEnabled = true
+    else
+        -- Restore original settings
+        Lighting.Brightness = originalLightingProps.Brightness
+        Lighting.Ambient = originalLightingProps.Ambient
+        Lighting.OutdoorAmbient = originalLightingProps.OutdoorAmbient
+        Lighting.ClockTime = originalLightingProps.ClockTime
+        fullbrightEnabled = false
+    end
+end
+
 
 local player = Players.LocalPlayer
 local gui = Instance.new("ScreenGui")
@@ -1014,4 +1046,31 @@ for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
     if espEnabled and player ~= game:GetService("Players").LocalPlayer then
         createEsp(player)
     end
+
+-- Insert after the ESP section or wherever appropriate
+local fullbrightButton = Instance.new("TextButton")
+fullbrightButton.Name = "FullbrightButton"
+fullbrightButton.Size = UDim2.new(1, -20, 0, 30)
+fullbrightButton.Position = UDim2.new(0, 10, 0, 320) -- Adjust Y position as needed
+fullbrightButton.BackgroundColor3 = Color3.fromRGB(150, 60, 150)
+fullbrightButton.AutoButtonColor = false
+fullbrightButton.Text = "Fullbright"
+fullbrightButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+fullbrightButton.Font = Enum.Font.GothamBold
+fullbrightButton.TextSize = 14
+fullbrightButton.Parent = movementTab
+
+local fullbrightCorner = Instance.new("UICorner")
+fullbrightCorner.CornerRadius = UDim.new(0, 6)
+fullbrightCorner.Parent = fullbrightButton
+
+-- Hover effect (similar to others)
+setupButtonHover(fullbrightButton, Color3.fromRGB(150, 60, 150), Color3.fromRGB(170, 80, 170))
+
+-- Connect toggle function
+fullbrightButton.MouseButton1Click:Connect(function()
+    toggleFullbright()
+    -- Optionally animate button as desired (like ESP)
+end)
+
 end
