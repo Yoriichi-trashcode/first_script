@@ -1,0 +1,43 @@
+import tkinter as tk
+import random
+import requests
+import winsound
+import time
+root = tk.Tk()
+root.geometry("400x300")
+root.config(bg="Gray")
+
+def get_cat_fact():
+    response = requests.get("https://catfact.ninja/fact")
+    if response.status_code == 200:
+        data = response.json()
+        facts.config(text=data["fact"])
+        random_bg()
+    else: print("Error: ", response.status_code)
+
+def clear():
+    facts.config(text="")
+
+def random_bg():
+    colors = ["LightBlue", "LightPink", "LightGreen"]
+    a = random.choice(colors)
+    for widget in (txt, clr, bt, facts, root, scrt):
+         widget.config(bg=a)
+def secret():
+        message = "Succesfully deleted System32 folder!"
+        winsound.MessageBeep(winsound.MB_ICONHAND)
+        root.after(1000, secret)
+        for widget in (txt, clr, bt, facts):
+            widget.config(text=message, fg="Red", font=("Arial", 30))
+
+txt = tk.Label(text="Facts about cats!", bg="Gray", fg="Black")
+bt = tk.Button(text="fetch a fact about cats", command=get_cat_fact, bg="Gray", fg="Black")
+clr = tk.Button(text="Clear", bg="Gray", fg="Black", command=clear)
+facts = tk.Label(text="", bg="Gray", fg="Black", justify="center", wraplength=350)
+scrt = tk.Button(text="Secret fact", bg="Gray", fg="Black", command=secret)
+txt.pack()
+bt.pack()
+facts.pack()
+clr.pack()
+scrt.place(x=370, y=280)
+root.mainloop()
